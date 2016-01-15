@@ -17,6 +17,11 @@
  * @namespace
  */
 var Dms = {};
+var symbolConstants = {
+  degrees: '°',
+  minutes: '′',
+  seconds: '″'
+};
 
 
 // note Unicode Degree = U+00B0. Prime = U+2032, Double prime = U+2033
@@ -78,6 +83,25 @@ Dms.parseDMS = function(dmsStr) {
  * @returns {string} Degrees formatted as deg/min/secs according to specified format.
  */
 Dms.toDMS = function(deg, format, dp) {
+  return Dms.toDMSWithDelim(deg, format, dp,
+    symbolConstants.degrees, symbolConstants.minutes, symbolConstants.seconds);
+};
+
+/**
+ * Converts decimal degrees to deg/min/sec format
+ *  - degree, prime, double-prime symbols are added, but sign is discarded, though no compass
+ *    direction is added.
+ * 
+ * @private 
+ * @param   {number} deg - Degrees to be formatted as specified.
+ * @param   {string} [format=dms] - Return value as 'd', 'dm', 'dms' for deg, deg+min, deg+min+sec.
+ * @param   {number} [dp=0|2|4] - Number of decimal places to use – default 0 for dms, 2 for dm, 4 for d.
+ * @param   {string} degDelim - Symbol to follow degrees.
+ * @param   {string} minDelim - Symbol to follow minutes.
+ * @param   {string} secDelim - Symbol to follow seconds.
+ * @returns {string} Degrees formatted as deg/min/secs according to specified format with specified delimiters.
+ */
+Dms.toDMSWithDelim = function(deg, format, dp, degDelim, minDelim, secDelim) {
     if (isNaN(deg)) return null;  // give up here if we can't make a number from deg
 
     // default values
@@ -94,13 +118,17 @@ Dms.toDMS = function(deg, format, dp) {
     deg = Math.abs(deg);  // (unsigned result ready for appending compass dir'n)
 
     var dms, d, m, s;
+    degDelim = degDelim || '';
+    minDelim = minDelim || '';
+    secDelim = secDelim || '';
+
     switch (format) {
         default: // invalid format spec!
         case 'd': case 'deg':
             d = deg.toFixed(dp);    // round degrees
             if (d<100) d = '0' + d; // pad with leading zeros
             if (d<10) d = '0' + d;
-            dms = d + '°';
+            dms = d + degDelim;
             break;
         case 'dm': case 'deg+min':
             var min = (deg*60).toFixed(dp); // convert degrees to minutes & round
@@ -109,7 +137,7 @@ Dms.toDMS = function(deg, format, dp) {
             if (d<100) d = '0' + d;         // pad with leading zeros
             if (d<10) d = '0' + d;
             if (m<10) m = '0' + m;
-            dms = d + '°' + m + '′';
+            dms = d + degDelim + m + minDelim;
             break;
         case 'dms': case 'deg+min+sec':
             var sec = (deg*3600).toFixed(dp); // convert degrees to seconds & round
@@ -120,7 +148,7 @@ Dms.toDMS = function(deg, format, dp) {
             if (d<10) d = '0' + d;
             if (m<10) m = '0' + m;
             if (s<10) s = '0' + s;
-            dms = d + '°' + m + '′' + s + '″';
+            dms = d + degDelim + m + minDelim + s + secDelim;
             break;
     }
 
@@ -137,7 +165,22 @@ Dms.toDMS = function(deg, format, dp) {
  * @returns {string} Degrees formatted as deg/min/secs according to specified format.
  */
 Dms.toLat = function(deg, format, dp) {
-    var lat = Dms.toDMS(deg, format, dp);
+  return Dms.toLatWithDelim(deg, format, dp,
+    symbolConstants.degrees, symbolConstants.minutes, symbolConstants.seconds);
+}
+
+/**
+ * 
+ * @param   {number} deg - Degrees to be formatted as specified.
+ * @param   {string} [format=dms] - Return value as 'd', 'dm', 'dms' for deg, deg+min, deg+min+sec.
+ * @param   {number} [dp=0|2|4] - Number of decimal places to use – default 0 for dms, 2 for dm, 4 for d.
+ * @param   {string} degDelim - Symbol to follow degrees.
+ * @param   {string} minDelim - Symbol to follow minutes.
+ * @param   {string} secDelim - Symbol to follow seconds.
+ * @returns {string} Degrees formatted as deg/min/secs according to specified format with specified delimiters.
+ */
+Dms.toLatWithDelim = function (deg, format, dp, degDelim, minDelim, secDelim) {
+  var lat = Dms.toDMSWithDelim(deg, format, dp, degDelim, minDelim, secDelim);
     return lat===null ? '–' : lat.slice(1) + (deg<0 ? 'S' : 'N');  // knock off initial '0' for lat!
 };
 
@@ -150,8 +193,23 @@ Dms.toLat = function(deg, format, dp) {
  * @param   {number} [dp=0|2|4] - Number of decimal places to use – default 0 for dms, 2 for dm, 4 for d.
  * @returns {string} Degrees formatted as deg/min/secs according to specified format.
  */
-Dms.toLon = function(deg, format, dp) {
-    var lon = Dms.toDMS(deg, format, dp);
+Dms.toLon = function (deg, format, dp) {
+  return Dms.toLonWithDelim(deg, format, dp,
+    symbolConstants.degrees, symbolConstants.minutes, symbolConstants.seconds);
+}
+
+/**
+ * 
+ * @param   {number} deg - Degrees to be formatted as specified.
+ * @param   {string} [format=dms] - Return value as 'd', 'dm', 'dms' for deg, deg+min, deg+min+sec.
+ * @param   {number} [dp=0|2|4] - Number of decimal places to use – default 0 for dms, 2 for dm, 4 for d.
+ * @param   {string} degDelim - Symbol to follow degrees.
+ * @param   {string} minDelim - Symbol to follow minutes.
+ * @param   {string} secDelim - Symbol to follow seconds.
+ * @returns {string} Degrees formatted as deg/min/secs according to specified format with specified delimiters.
+ */
+Dms.toLonWithDelim = function (deg, format, dp, degDelim, minDelim, secDelim) {
+  var lon = Dms.toDMSWithDelim(deg, format, dp, degDelim, minDelim, secDelim);
     return lon===null ? '–' : lon + (deg<0 ? 'W' : 'E');
 };
 
